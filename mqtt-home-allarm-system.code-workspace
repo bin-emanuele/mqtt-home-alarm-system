@@ -1,0 +1,20 @@
+{
+	"folders": [
+        {
+            "name": "mqtt-home-allarm-system",
+            "path": "."
+        },
+        {
+            "name": "test-realtime",
+            "path": "../test-realtime"
+        }
+    ],
+    "settings": {
+        "files.associations": {
+            "*.html": "twig",
+            "*.tpl": "smarty",
+            "memory": "cpp",
+            "cstddef": "cpp"
+        }
+    }
+}
