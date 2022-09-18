@@ -35,7 +35,7 @@ NTPClient timeClient(ntpUDP);
 MotionSensor sensors[MAX_SENSORS];
 PCF8574 sensorsBlock1(0x20);
 PCF8574 sensorsBlock2(0x21);
-PCF8574 sensorsBlock3(0x22);
+// PCF8574 sensorsBlock3(0x22);
 
 char msg[MSG_BUFFER_SIZE];
 int value = 0;
@@ -120,20 +120,20 @@ void setup_sensors()
         Serial.println("KO");
     }
 
-    sensors[8] = MotionSensor("mhas/pir/esterno/fronte", &sensorsBlock3, P0, P1);
-    sensors[9] = MotionSensor("mhas/pir/esterno/retro", &sensorsBlock3, P2, P3);
-    sensors[10] = MotionSensor("mhas/pir/esterno/portico", &sensorsBlock3, P4, P5);
-    sensors[11] = MotionSensor("mhas/pir/esterno/veranda", &sensorsBlock3, P6, P7);
+    // sensors[8] = MotionSensor("mhas/pir/esterno/fronte", &sensorsBlock3, P0, P1);
+    // sensors[9] = MotionSensor("mhas/pir/esterno/retro", &sensorsBlock3, P2, P3);
+    // sensors[10] = MotionSensor("mhas/pir/esterno/portico", &sensorsBlock3, P4, P5);
+    // sensors[11] = MotionSensor("mhas/pir/esterno/veranda", &sensorsBlock3, P6, P7);
 
-    Serial.print("Init sensorsBlock3... ");
-    if (sensorsBlock3.begin())
-    {
-        Serial.println("OK");
-    }
-    else
-    {
-        Serial.println("KO");
-    }
+    // Serial.print("Init sensorsBlock3... ");
+    // if (sensorsBlock3.begin())
+    // {
+    //     Serial.println("OK");
+    // }
+    // else
+    // {
+    //     Serial.println("KO");
+    // }
 }
 
 void callback(char *topic, byte *payload, unsigned int length)
@@ -217,28 +217,23 @@ void loop()
     for (size_t i = 0; i < MAX_SENSORS; i++)
     {
         // Check if initialized
-        if (!sensors[0].isInitialized()) {
+        if (!sensors[i].isInitialized()) {
             continue;
         }
 
         // Read values
-        sensors[0].readValues();
+        sensors[i].readValues();
 
         // Values have hanged?
-        if (!sensors[0].isChanged()) {
+        if (!sensors[i].isChanged()) {
             continue;
         }
 
-        String s = sensors[0].generatePayloadJSON(rtc.now());
-
-        Serial.print("Publish message: ");
-        Serial.print(sensors[0].getTopic());
-        Serial.println(": ");
-        Serial.print(s);
-        Serial.println("");
-
-        client.publish(sensors[0].getTopic(), s.c_str(), false);
+        String s = sensors[i].generatePayloadJSON(rtc.now());
+        client.publish(sensors[i].getTopic(), s.c_str(), false);
     }
 
-    delay(250);
+    // Check what to update...
+
+    delay(1000);
 }

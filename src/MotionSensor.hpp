@@ -38,8 +38,8 @@ MotionSensor::MotionSensor(const char *topic, PCF8574 *sensorsBlock, uint8_t pin
     this->pinMotion = pinMotion;
     this->pinTamper = pinTamper;
 
-    sensorsBlock->pinMode(P0, INPUT_PULLUP);
-    sensorsBlock->pinMode(P1, INPUT_PULLUP);
+    sensorsBlock->pinMode(this->pinMotion, INPUT_PULLUP);
+    sensorsBlock->pinMode(this->pinTamper, INPUT_PULLUP);
 
     this->initialized = true;
 }
@@ -63,6 +63,13 @@ bool MotionSensor::readValues () {
 
     this->currentMotion = this->getMotionValue();
     this->currentTamper = this->getTamperValue();
+
+    Serial.print(this->topic);
+    Serial.print(" - Tamper: ");
+    Serial.print(this->currentTamper);
+
+    Serial.print(" - Motion: ");
+    Serial.println(this->currentMotion);
 
     return true;
 }
