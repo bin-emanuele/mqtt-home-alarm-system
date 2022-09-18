@@ -45,7 +45,8 @@ PCF8574 sensorsBlock3(0x22);
 #endif
 
 char msg[MSG_BUFFER_SIZE];
-int value = 0;
+
+unsigned long lastMsg = 0;
 
 void setup_wifi()
 {
@@ -97,10 +98,10 @@ void setup_sensors()
 {
     Serial.println("Setting up sensors...");
 
-    sensors[0] = MotionSensor("mhas/pir/interno/soggiorno-1", &sensorsBlock1, P0, P1);
-    sensors[1] = MotionSensor("mhas/pir/interno/soggiorno-2", &sensorsBlock1, P2, P3);
-    sensors[2] = MotionSensor("mhas/pir/interno/corridoio", &sensorsBlock1, P4, P5);
-    sensors[3] = MotionSensor("mhas/pir/interno/matrimoniale", &sensorsBlock1, P6, P7);
+    sensors[0] = MotionSensor("mhas/pir/interno/zona-1", &sensorsBlock1, P0, P1);
+    sensors[1] = MotionSensor("mhas/pir/interno/zona-2", &sensorsBlock1, P2, P3);
+    sensors[2] = MotionSensor("mhas/pir/interno/zona-3", &sensorsBlock1, P4, P5);
+    sensors[3] = MotionSensor("mhas/pir/interno/zona-4", &sensorsBlock1, P6, P7);
 
     Serial.print("Init sensorsBlock1... ");
     if (sensorsBlock1.begin())
@@ -113,10 +114,10 @@ void setup_sensors()
     }
 
     #ifdef SENSOR_BLOCK_2
-    sensors[4] = MotionSensor("mhas/pir/interno/garage", &sensorsBlock2, P0, P1);
-    sensors[5] = MotionSensor("mhas/pir/interno/xxx", &sensorsBlock2, P2, P3);
-    sensors[6] = MotionSensor("mhas/pir/interno/yyy", &sensorsBlock2, P4, P5);
-    sensors[7] = MotionSensor("mhas/pir/interno/zzz", &sensorsBlock2, P6, P7);
+    sensors[4] = MotionSensor("mhas/pir/interno/zona-5", &sensorsBlock2, P0, P1);
+    sensors[5] = MotionSensor("mhas/pir/interno/zona-6", &sensorsBlock2, P2, P3);
+    sensors[6] = MotionSensor("mhas/pir/interno/zona-7", &sensorsBlock2, P4, P5);
+    sensors[7] = MotionSensor("mhas/pir/interno/zona-8", &sensorsBlock2, P6, P7);
 
     Serial.print("Init sensorsBlock2... ");
     if (sensorsBlock2.begin())
@@ -130,10 +131,10 @@ void setup_sensors()
     #endif
 
     #ifdef SENSOR_BLOCK_3
-    sensors[8] = MotionSensor("mhas/pir/esterno/fronte", &sensorsBlock3, P0, P1);
-    sensors[9] = MotionSensor("mhas/pir/esterno/retro", &sensorsBlock3, P2, P3);
-    sensors[10] = MotionSensor("mhas/pir/esterno/portico", &sensorsBlock3, P4, P5);
-    sensors[11] = MotionSensor("mhas/pir/esterno/veranda", &sensorsBlock3, P6, P7);
+    sensors[8] = MotionSensor("mhas/pir/esterno/zona-1", &sensorsBlock3, P0, P1);
+    sensors[9] = MotionSensor("mhas/pir/esterno/zona-2", &sensorsBlock3, P2, P3);
+    sensors[10] = MotionSensor("mhas/pir/esterno/zona-3", &sensorsBlock3, P4, P5);
+    sensors[11] = MotionSensor("mhas/pir/esterno/zona-4", &sensorsBlock3, P6, P7);
 
     Serial.print("Init sensorsBlock3... ");
     if (sensorsBlock3.begin())
@@ -213,6 +214,8 @@ void setup()
 
     client.setServer(MQTT_SERVER, 1883);
     client.setCallback(callback);
+
+    lastMsg = 0;
 }
 
 void loop()
@@ -223,6 +226,9 @@ void loop()
         reconnect();
     }
     client.loop();
+
+    unsigned long now = millis();
+    bool forcePublish = (lastMsg == 0) || ((now - lastMsg) > 60000);
 
     // Check all the motion sensors
     for (size_t i = 0; i < MAX_SENSORS; i++)
@@ -236,8 +242,15 @@ void loop()
         sensors[i].readValues();
 
         // Values have hanged?
-        if (!sensors[i].isChanged()) {
+        if (!forcePublish && !sensors[i].isChanged()) {
             continue;
+        }
+
+        sensors[i].log();
+
+        // Remember me...
+        if (forcePublish) {
+            lastMsg = millis();
         }
 
         String s = sensors[i].generatePayloadJSON(rtc.now());
@@ -246,5 +259,5 @@ void loop()
 
     // Check what to update...
 
-    delay(1000);
+    delay(100);
 }

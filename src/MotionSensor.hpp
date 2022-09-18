@@ -15,23 +15,26 @@ private:
     bool lastTamper = false;
     bool currentTamper = false;
 
+    unsigned long lastMotionTimestamp = 0;
+
     bool getTamperValue();
     bool getMotionValue();
 
 public:
     MotionSensor();
-    MotionSensor(const char *topic, PCF8574 *sensorsBlock, uint8_t pinMotion, uint8_t pinTamper);
+    MotionSensor(const char *topic, PCF8574 *sensorsBlock, uint8_t pinTamper, uint8_t pinMotion);
     ~MotionSensor();
 
     bool readValues();
     bool isChanged();
     bool isInitialized();
+    void log();
 
     const char *getTopic();
     String generatePayloadJSON(DateTime time);
 };
 
-MotionSensor::MotionSensor(const char *topic, PCF8574 *sensorsBlock, uint8_t pinMotion, uint8_t pinTamper)
+MotionSensor::MotionSensor(const char *topic, PCF8574 *sensorsBlock, uint8_t pinTamper, uint8_t pinMotion)
 {
     this->topic = topic;
     this->sensorsBlock = sensorsBlock;
@@ -64,14 +67,16 @@ bool MotionSensor::readValues () {
     this->currentMotion = this->getMotionValue();
     this->currentTamper = this->getTamperValue();
 
+    return true;
+}
+
+void MotionSensor::log () {
     Serial.print(this->topic);
     Serial.print(" - Tamper: ");
     Serial.print(this->currentTamper);
 
     Serial.print(" - Motion: ");
     Serial.println(this->currentMotion);
-
-    return true;
 }
 
 bool MotionSensor::isChanged () {
@@ -101,7 +106,16 @@ bool MotionSensor::getMotionValue()
         return false;
     }
 
-    return (bool) this->sensorsBlock->digitalRead(this->pinMotion);
+    bool read = this->sensorsBlock->digitalRead(this->pinMotion);
+    if (read) {
+        this->lastMotionTimestamp = millis();
+    }
+
+    if ((millis() - lastMotionTimestamp) < 1000) {
+        return true;
+    }
+
+    return (bool) read;
 }
 
 bool MotionSensor::getTamperValue()
