@@ -17,6 +17,7 @@
 
 #define MSG_BUFFER_SIZE (50)
 #define MAX_SENSORS 12
+#define SENSOR_BLOCK_3
 
 const char *SSID = "SmartHome";
 const char *WIFI_PASSWORD = "MicaTanto";
@@ -34,8 +35,14 @@ NTPClient timeClient(ntpUDP);
 
 MotionSensor sensors[MAX_SENSORS];
 PCF8574 sensorsBlock1(0x20);
+
+#ifdef SENSOR_BLOCK_2
 PCF8574 sensorsBlock2(0x21);
-// PCF8574 sensorsBlock3(0x22);
+#endif
+
+#ifdef SENSOR_BLOCK_3
+PCF8574 sensorsBlock3(0x22);
+#endif
 
 char msg[MSG_BUFFER_SIZE];
 int value = 0;
@@ -105,10 +112,11 @@ void setup_sensors()
         Serial.println("KO");
     }
 
+    #ifdef SENSOR_BLOCK_2
     sensors[4] = MotionSensor("mhas/pir/interno/garage", &sensorsBlock2, P0, P1);
-    // sensors[5] = MotionSensor("mhas/pir/interno/xxx", &sensorsBlock2, P2, P3);
-    // sensors[6] = MotionSensor("mhas/pir/interno/yyy", &sensorsBlock2, P4, P5);
-    // sensors[7] = MotionSensor("mhas/pir/interno/zzz", &sensorsBlock2, P6, P7);
+    sensors[5] = MotionSensor("mhas/pir/interno/xxx", &sensorsBlock2, P2, P3);
+    sensors[6] = MotionSensor("mhas/pir/interno/yyy", &sensorsBlock2, P4, P5);
+    sensors[7] = MotionSensor("mhas/pir/interno/zzz", &sensorsBlock2, P6, P7);
 
     Serial.print("Init sensorsBlock2... ");
     if (sensorsBlock2.begin())
@@ -119,21 +127,24 @@ void setup_sensors()
     {
         Serial.println("KO");
     }
+    #endif
 
-    // sensors[8] = MotionSensor("mhas/pir/esterno/fronte", &sensorsBlock3, P0, P1);
-    // sensors[9] = MotionSensor("mhas/pir/esterno/retro", &sensorsBlock3, P2, P3);
-    // sensors[10] = MotionSensor("mhas/pir/esterno/portico", &sensorsBlock3, P4, P5);
-    // sensors[11] = MotionSensor("mhas/pir/esterno/veranda", &sensorsBlock3, P6, P7);
+    #ifdef SENSOR_BLOCK_3
+    sensors[8] = MotionSensor("mhas/pir/esterno/fronte", &sensorsBlock3, P0, P1);
+    sensors[9] = MotionSensor("mhas/pir/esterno/retro", &sensorsBlock3, P2, P3);
+    sensors[10] = MotionSensor("mhas/pir/esterno/portico", &sensorsBlock3, P4, P5);
+    sensors[11] = MotionSensor("mhas/pir/esterno/veranda", &sensorsBlock3, P6, P7);
 
-    // Serial.print("Init sensorsBlock3... ");
-    // if (sensorsBlock3.begin())
-    // {
-    //     Serial.println("OK");
-    // }
-    // else
-    // {
-    //     Serial.println("KO");
-    // }
+    Serial.print("Init sensorsBlock3... ");
+    if (sensorsBlock3.begin())
+    {
+        Serial.println("OK");
+    }
+    else
+    {
+        Serial.println("KO");
+    }
+    #endif
 }
 
 void callback(char *topic, byte *payload, unsigned int length)
